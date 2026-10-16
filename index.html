@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101211">
+  <title>RS: Red Shift — arena walki</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f3f0e8;
+      --muted: #969c94;
+      --line: #343a35;
+      --panel: #171b18;
+      --panel-2: #1d221e;
+      --red: #f15640;
+      --lime: #d8f16b;
+      --gold: #e7b66b;
+      --font: "Arial Narrow", "Roboto Condensed", Impact, sans-serif;
+      --body: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #101211;
+      color: var(--ink);
+      font-family: var(--body);
+      background-image: radial-gradient(ellipse at 50% -10%, #283029 0, transparent 52%);
+    }
+    button { font: inherit; }
+    .shell { width: min(1360px, calc(100% - 48px)); margin: 0 auto; }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between; height: 76px;
+      border-bottom: 1px solid var(--line); gap: 20px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); }
+    .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; background: var(--red); color: #171512; font: 900 18px var(--font); transform: rotate(-6deg); }
+    .brand-title { font: 800 15px var(--font); letter-spacing: .12em; line-height: 1.1; }
+    .brand-sub { display: block; margin-top: 4px; color: var(--muted); font: 600 9px var(--body); letter-spacing: .18em; }
+    .top-meta { display: flex; align-items: center; gap: 22px; color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    .live-dot { display: inline-block; width: 7px; height: 7px; margin-right: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 12px #d8f16b88; }
+    main { padding: 37px 0 44px; }
+    .intro { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 25px; }
+    .eyebrow { margin: 0 0 10px; color: var(--lime); font: 700 10px var(--body); letter-spacing: .22em; text-transform: uppercase; }
+    h1 { margin: 0; font: 800 clamp(34px, 5vw, 60px)/.95 var(--font); letter-spacing: -.025em; text-transform: uppercase; }
+    h1 span { color: var(--red); }
+    .intro-note { max-width: 250px; padding: 0 0 4px 16px; border-left: 1px solid var(--red); color: #b9beb8; font-size: 12px; line-height: 1.55; }
+    .game-layout { display: grid; grid-template-columns: minmax(0, 1fr) 306px; gap: 17px; align-items: stretch; }
+    .game-main { min-width: 0; }
+    .fight-hud { display: grid; grid-template-columns: 1fr 82px 1fr; align-items: center; gap: 16px; margin-bottom: 10px; }
+    .fighter-hud { min-width: 0; }
+    .fighter-name-line { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 7px; }
+    .fighter-name { overflow: hidden; color: var(--ink); font: 800 15px var(--font); letter-spacing: .08em; text-overflow: ellipsis; white-space: nowrap; }
+    .fighter-tag { color: var(--muted); font: 700 9px var(--body); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+    .health-track, .focus-track { overflow: hidden; height: 9px; border: 1px solid #495048; background: #242a25; }
+    .health-fill { height: 100%; width: 100%; background: var(--lime); transition: width .2s ease; }
+    .right-hud .health-fill { float: right; background: var(--red); }
+    .focus-track { height: 3px; margin-top: 5px; border: 0; background: #303630; }
+    .focus-fill { width: 42%; height: 100%; background: var(--gold); transition: width .2s ease; }
+    .right-hud .focus-fill { margin-left: auto; }
+    .round-clock { display: grid; place-items: center; align-content: center; min-height: 40px; border-left: 1px solid var(--line); border-right: 1px solid var(--line); text-align: center; }
+    .clock-label { color: var(--muted); font-size: 8px; font-weight: 700; letter-spacing: .18em; }
+    .clock-value { margin-top: 1px; color: var(--ink); font: 800 20px var(--font); font-variant-numeric: tabular-nums; }
+    .right-hud .fighter-name-line { flex-direction: row-reverse; }
+    .right-hud .fighter-tag { text-align: left; }
+    .right-hud { text-align: right; }
+    .arena-frame { position: relative; overflow: hidden; border: 1px solid #485049; background: #202721; box-shadow: 0 18px 60px #0007; }
+    .arena-topline { position: absolute; z-index: 1; top: 12px; left: 15px; right: 15px; display: flex; justify-content: space-between; pointer-events: none; color: #d2d7d0aa; font: 700 9px var(--body); letter-spacing: .14em; text-transform: uppercase; }
+    #arena { display: block; width: 100%; aspect-ratio: 16 / 9; }
+    .stage-overlay { position: absolute; inset: 0; display: grid; place-items: center; padding: 22px; background: #0a0d0bd9; text-align: center; backdrop-filter: blur(5px); }
+    .stage-overlay[hidden] { display: none; }
+    .overlay-content { width: min(390px, 100%); }
+    .overlay-kicker { margin-bottom: 10px; color: var(--lime); font: 700 10px var(--body); letter-spacing: .22em; text-transform: uppercase; }
+    .overlay-title { margin: 0; font: 900 clamp(32px, 7vw, 58px)/.92 var(--font); text-transform: uppercase; }
+    .overlay-copy { margin: 13px auto 20px; max-width: 330px; color: #c0c6be; font-size: 12px; line-height: 1.55; }
+    .action-button { display: inline-flex; align-items: center; justify-content: center; min-height: 47px; gap: 12px; padding: 0 20px; border: 0; background: var(--lime); color: #121510; cursor: pointer; font: 900 12px var(--body); letter-spacing: .08em; text-transform: uppercase; transition: transform .15s, background .15s; }
+    .action-button:hover { transform: translateY(-2px); background: #e6ff85; }
+    .action-button:active { transform: translateY(0); }
+    .action-button .arrow { font-size: 17px; }
+    .below-arena { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 11px 1px 0; color: var(--muted); font-size: 10px; }
+    .status-line { display: flex; align-items: center; gap: 8px; }
+    .status-pill { color: var(--lime); font-size: 9px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .hint-key { padding: 3px 6px; border: 1px solid #454b45; color: #d2d7d0; font: 700 9px var(--body); }
+    .side-panel { display: flex; flex-direction: column; border: 1px solid var(--line); background: linear-gradient(145deg, #1b201c, #141715); }
+    .side-section { padding: 18px 18px 17px; border-bottom: 1px solid var(--line); }
+    .section-label { margin: 0 0 13px; color: var(--muted); font: 700 9px var(--body); letter-spacing: .18em; text-transform: uppercase; }
+    .mode-options { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .mode-button { min-height: 69px; padding: 11px 10px; border: 1px solid #3c433d; background: #191e1a; color: #c9cec6; cursor: pointer; text-align: left; transition: border-color .15s, background .15s, color .15s; }
+    .mode-button:hover { border-color: #818b7c; }
+    .mode-button[aria-pressed="true"] { border-color: var(--lime); background: #252c22; color: var(--ink); box-shadow: inset 0 -2px var(--lime); }
+    .mode-icon { display: block; margin-bottom: 6px; color: var(--lime); font-size: 15px; }
+    .mode-name { display: block; font: 800 11px var(--font); letter-spacing: .07em; text-transform: uppercase; }
+    .mode-desc { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; }
+    .start-wrap { padding: 15px 18px 17px; }
+    .start-wrap .action-button { width: 100%; }
+    .match-info { display: grid; grid-template-columns: 1fr auto; gap: 9px; font-size: 11px; }
+    .match-info span:nth-child(odd) { color: var(--muted); }
+    .match-info span:nth-child(even) { color: var(--ink); font-weight: 700; text-align: right; }
+    .control-line { margin-top: 8px; color: #c8cec5; font-size: 10px; line-height: 1.55; }
+    .control-line strong { display: inline-block; min-width: 48px; color: var(--lime); font-size: 9px; letter-spacing: .08em; }
+    .control-line kbd { padding: 2px 4px; border: 1px solid #424a41; color: #e9ecdf; font: 700 9px var(--body); }
+    .technique { position: relative; overflow: hidden; margin-top: auto; padding: 18px; min-height: 148px; background: #282e27; }
+    .technique::after { content: "↗"; position: absolute; right: 13px; bottom: -19px; color: #d8f16b13; font: 900 120px var(--font); transform: rotate(-13deg); }
+    .technique .section-label { margin-bottom: 9px; color: var(--lime); }
+    .technique h2 { position: relative; z-index: 1; margin: 0 0 8px; font: 900 25px var(--font); letter-spacing: .03em; text-transform: uppercase; }
+    .technique p { position: relative; z-index: 1; max-width: 235px; margin: 0; color: #bec5bb; font-size: 10px; line-height: 1.55; }
+    .touch-controls { display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .control-pad { padding: 10px; border: 1px solid var(--line); background: var(--panel); }
+    .pad-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .pad-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+    .pad-btn { min-height: 39px; padding: 5px 3px; border: 1px solid #414941; background: #202621; color: #e2e6dc; cursor: pointer; font-size: 9px; font-weight: 800; touch-action: none; user-select: none; }
+    .pad-btn:active, .pad-btn.is-down { border-color: var(--lime); background: #303a2a; color: var(--lime); }
+    .pad-btn.attack-special { border-color: #795641; color: #f0c281; }
+    .footer { display: flex; justify-content: space-between; gap: 20px; margin-top: 23px; padding-top: 12px; border-top: 1px solid var(--line); color: #7d847c; font-size: 9px; line-height: 1.5; }
+    .footer a { color: #aab4a5; text-decoration-color: #65705f; text-underline-offset: 3px; }
+    button:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+    @media (max-width: 940px) {
+      .game-layout { grid-template-columns: 1fr; }
+      .side-panel { display: grid; grid-template-columns: 1fr 1fr; }
+      .side-section:first-child { grid-row: span 2; }
+      .start-wrap { border-bottom: 1px solid var(--line); }
+      .technique { min-height: 120px; }
+    }
+    @media (max-width: 620px) {
+      .shell { width: min(100% - 28px, 540px); }
+      .topbar { height: 60px; }
+      .top-meta { gap: 9px; font-size: 9px; }
+      .top-meta .hide-small { display: none; }
+      main { padding: 25px 0 26px; }
+      .intro { display: block; margin-bottom: 20px; }
+      h1 { font-size: 43px; }
+      .intro-note { margin-top: 13px; max-width: 330px; font-size: 11px; }
+      .fight-hud { grid-template-columns: 1fr 55px 1fr; gap: 8px; }
+      .fighter-name { font-size: 12px; }
+      .fighter-tag { font-size: 7px; }
+      .health-track { height: 7px; }
+      .clock-value { font-size: 17px; }
+      .arena-topline { top: 8px; left: 9px; right: 9px; font-size: 7px; }
+      .below-arena { align-items: flex-start; font-size: 9px; }
+      .below-arena .right-hint { display: none; }
+      .side-panel { grid-template-columns: 1fr; }
+      .side-section:first-child { grid-row: auto; }
+      .touch-controls { display: grid; }
+      .footer { display: block; }
+      .footer span { display: block; margin-bottom: 5px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="RS: Red Shift">
+        <span class="brand-mark">RS</span>
+        <span class="brand-title">RS: RED SHIFT<span class="brand-sub">ARENA WALKI</span></span>
+      </a>
+      <div class="top-meta"><span><i class="live-dot"></i>ARENA OTWARTA</span><span class="hide-small">RS FIGHT MODE</span><span>01 — 99</span></div>
+    </header>
+
+    <main>
+      <section class="intro">
+        <div><p class="eyebrow">Ruch. Timing. Charakter.</p><h1>Wejdź do <span>ringu.</span></h1></div>
+        <div class="intro-note">Krótka runda w duchu dojo: zachowaj dystans, znajdź okno i uderz z wyczuciem.</div>
+      </section>
+
+      <div class="game-layout">
+        <section class="game-main" aria-label="Arena walki">
+          <div class="fight-hud">
+            <div class="fighter-hud">
+              <div class="fighter-name-line"><span class="fighter-name" id="leftName">RED / GRACZ 1</span><span class="fighter-tag" id="leftTag">CZERWONY RÓG</span></div>
+              <div class="health-track"><div class="health-fill" id="leftHealth"></div></div><div class="focus-track"><div class="focus-fill" id="leftFocus"></div></div>
+            </div>
+            <div class="round-clock"><span class="clock-label">RUNDA</span><span class="clock-value" id="clock">01:39</span></div>
+            <div class="fighter-hud right-hud">
+              <div class="fighter-name-line"><span class="fighter-name" id="rightName">BOT / SHIFT</span><span class="fighter-tag" id="rightTag">NIEBIESKI RÓG</span></div>
+              <div class="health-track"><div class="health-fill" id="rightHealth"></div></div><div class="focus-track"><div class="focus-fill" id="rightFocus"></div></div>
+            </div>
+          </div>
+
+          <div class="arena-frame">
+            <div class="arena-topline"><span>RS: RED SHIFT · ARENA 01</span><span>WALKA TECHNICZNA</span></div>
+            <canvas id="arena" width="960" height="540" aria-label="Ilustracja pojedynku w ringu"></canvas>
+            <div class="stage-overlay" id="stageOverlay">
+              <div class="overlay-content">
+                <div class="overlay-kicker" id="overlayKicker">Wybierz format walki</div>
+                <h2 class="overlay-title" id="overlayTitle">Gotowy na<br>rundę?</h2>
+                <p class="overlay-copy" id="overlayCopy">Zrób miejsce, ustaw gardę i pokaż, co potrafi dobry timing.</p>
+                <button class="action-button" id="overlayButton" type="button">Rozpocznij walkę <span class="arrow">↗</span></button>
+              </div>
+            </div>
+          </div>
+          <div class="below-arena">
+            <div class="status-line"><span class="status-pill" id="statusPill">GOTOWY</span><span id="statusText">Wybierz tryb i rozpocznij rundę.</span></div>
+            <div class="right-hint"><span class="hint-key">SPACJA</span> start / rewanż</div>
+          </div>
+
+          <div class="touch-controls" aria-label="Sterowanie dotykowe">
+            <div class="control-pad">
+              <div class="pad-heading"><span>Gracz 1</span><span>A · F · G · H</span></div>
+              <div class="pad-actions">
+                <button class="pad-btn" data-player="1" data-action="left">◀</button><button class="pad-btn" data-player="1" data-action="right">▶</button><button class="pad-btn" data-player="1" data-action="dodge">UNIK</button><button class="pad-btn" data-player="1" data-action="block">BLOK</button>
+                <button class="pad-btn" data-player="1" data-action="jab">PROSTY</button><button class="pad-btn" data-player="1" data-action="cross">CROSS</button><button class="pad-btn attack-special" data-player="1" data-action="uraken">URAKEN</button><span></span>
+              </div>
+            </div>
+            <div class="control-pad" id="p2TouchPad" hidden>
+              <div class="pad-heading"><span>Gracz 2</span><span>← · J · K · L</span></div>
+              <div class="pad-actions">
+                <button class="pad-btn" data-player="2" data-action="left">◀</button><button class="pad-btn" data-player="2" data-action="right">▶</button><button class="pad-btn" data-player="2" data-action="dodge">UNIK</button><button class="pad-btn" data-player="2" data-action="block">BLOK</button>
+                <button class="pad-btn" data-player="2" data-action="jab">PROSTY</button><button class="pad-btn" data-player="2" data-action="cross">CROSS</button><button class="pad-btn attack-special" data-player="2" data-action="uraken">URAKEN</button><span></span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="side-panel" aria-label="Ustawienia walki i opis technik">
+          <section class="side-section">
+            <p class="section-label">Wybierz pojedynek</p>
+            <div class="mode-options" role="group" aria-label="Tryb gry">
+              <button class="mode-button" type="button" data-mode="solo" aria-pressed="true"><span class="mode-icon">◉</span><span class="mode-name">Solo</span><span class="mode-desc">Ty kontra bot</span></button>
+              <button class="mode-button" type="button" data-mode="local" aria-pressed="false"><span class="mode-icon">◎</span><span class="mode-name">Lokalnie</span><span class="mode-desc">Dwóch graczy</span></button>
+            </div>
+          </section>
+          <div class="start-wrap"><button class="action-button" id="startButton" type="button">Rozpocznij walkę <span class="arrow">↗</span></button></div>
+          <section class="side-section">
+            <p class="section-label">Karta pojedynku</p>
+            <div class="match-info"><span>Format</span><span id="matchFormat">Solo · versus bot</span><span>Limit rundy</span><span>99 sekund</span><span>Technika specjalna</span><span>Uraken / backfist</span></div>
+          </section>
+          <section class="side-section">
+            <p class="section-label">Sterowanie · klawiatura</p>
+            <div class="control-line"><strong>GRACZ 1</strong> <kbd>A</kbd> <kbd>D</kbd> ruch · <kbd>W</kbd> unik · <kbd>S</kbd> blok</div>
+            <div class="control-line"><strong>ATAKI</strong> <kbd>F</kbd> prosty · <kbd>G</kbd> cross · <kbd>H</kbd> uraken</div>
+            <div class="control-line" id="p2Legend" hidden><strong>GRACZ 2</strong> <kbd>←</kbd> <kbd>→</kbd> ruch · <kbd>↑</kbd> unik · <kbd>↓</kbd> blok · <kbd>J</kbd>/<kbd>K</kbd>/<kbd>L</kbd> ciosy</div>
+          </section>
+          <section class="technique">
+            <p class="section-label">Technika rundy / 01</p>
+            <h2>Uraken</h2>
+            <p>Backfist, czyli uderzenie grzbietem pięści. Ma duży zasięg i moc, ale wymaga chwili na przygotowanie.</p>
+          </section>
+        </aside>
+      </div>
+
+      <footer class="footer"><span>Projekt inspirowany tematyką treningów sztuk walki i boksu. Gra nie jest oficjalnym produktem klubu Backfist.</span><span>Motyw: <a href="https://backfist.pl/" target="_blank" rel="noreferrer">Backfist — sztuki walki</a></span></footer>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+      const canvas = document.getElementById('arena');
+      const ctx = canvas.getContext('2d');
+      const ui = {
+        overlay: document.getElementById('stageOverlay'),
+        overlayKicker: document.getElementById('overlayKicker'),
+        overlayTitle: document.getElementById('overlayTitle'),
+        overlayCopy: document.getElementById('overlayCopy'),
+        overlayButton: document.getElementById('overlayButton'),
+        startButton: document.getElementById('startButton'),
+        leftName: document.getElementById('leftName'), rightName: document.getElementById('rightName'),
+        leftTag: document.getElementById('leftTag'), rightTag: document.getElementById('rightTag'),
+        leftHealth: document.getElementById('leftHealth'), rightHealth: document.getElementById('rightHealth'),
+        leftFocus: document.getElementById('leftFocus'), rightFocus: document.getElementById('rightFocus'),
+        clock: document.getElementById('clock'), status: document.getElementById('statusText'), statusPill: document.getElementById('statusPill'),
+        format: document.getElementById('matchFormat'), p2TouchPad: document.getElementById('p2TouchPad')
+      };
+
+      const W = 960, H = 540;
+      const keys = new Set();
+      const touchHeld = new Set();
+      const keyboardMap = {
+        KeyA: [1, 'left'], KeyD: [1, 'right'], KeyS: [1, 'block'],
+        ArrowLeft: [2, 'left'], ArrowRight: [2, 'right'], ArrowDown: [2, 'block']
+      };
+      const attackMap = { KeyF: [1, 'jab'], KeyG: [1, 'cross'], KeyH: [1, 'uraken'], KeyJ: [2, 'jab'], KeyK: [2, 'cross'], KeyL: [2, 'uraken'] };
+      const dodgeMap = { KeyW: 1, ArrowUp: 2 };
+      let mode = 'solo';
+      let state = 'ready';
+      let countdown = 0;
+      let remaining = 99;
+      let winner = null;
+      let lastFrame = performance.now();
+      let elapsed = 0;
+      let hitFlash = 0;
+      let hitText = '';
+      let hitTextTimer = 0;
+      let ambience = 0;
+      let aiThink = 0.4;
+      let aiGuard = 0;
+      let aiDodge = 0;
+      let announce = '';
+      let announceTimer = 0;
+
+      function fighter(id, x, color, accent, name) {
+        return { id, x, home: x, color, accent, name, hp: 100, focus: 42, attack: null, cooldown: 0, dodge: 0, dodgeCooldown: 0, hitstun: 0, blocking: false, move: 0, aiMove: 0, wobble: Math.random() * 6, facing: id === 1 ? 1 : -1 };
+      }
+      let p1, p2;
+
+      function resetFight() {
+        p1 = fighter(1, 305, '#d94f3e', '#f2b16c', 'RED');
+        p2 = fighter(2, 655, '#337c8d', '#d8efbd', 'SHIFT');
+        remaining = 99; winner = null; countdown = 2.7; state = 'countdown'; aiThink = .35; aiGuard = 0; aiDodge = 0;
+        hitText = ''; hitTextTimer = 0; hitFlash = 0;
+        keys.clear(); touchHeld.clear();
+        updateUI();
+        ui.overlay.hidden = true;
+        ui.statusPill.textContent = 'PRZYGOTUJ SIĘ';
+        ui.status.textContent = 'Runda zaraz się rozpocznie…';
+        announce = '3'; announceTimer = 2.7;
+      }
+
+      function setMode(next) {
+        if (state === 'playing' || state === 'countdown') return;
+        mode = next;
+        document.querySelectorAll('.mode-button').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.mode === mode)));
+        ui.format.textContent = mode === 'solo' ? 'Solo · versus bot' : 'Lokalnie · 2 graczy';
+        ui.rightName.textContent = mode === 'solo' ? 'BOT / SHIFT' : 'SHIFT / GRACZ 2';
+        ui.rightTag.textContent = mode === 'solo' ? 'NIEBIESKI RÓG' : 'NIEBIESKI RÓG';
+        ui.p2TouchPad.hidden = mode !== 'local';
+        document.getElementById('p2Legend').hidden = mode !== 'local';
+        ui.status.textContent = mode === 'solo' ? 'Wybierz tryb i rozpocznij rundę.' : 'Podzielcie klawiaturę albo użyjcie paneli dotykowych.';
+      }
+
+      document.querySelectorAll('.mode-button').forEach(button => button.addEventListener('click', () => setMode(button.dataset.mode)));
+      ui.startButton.addEventListener('click', resetFight);
+      ui.overlayButton.addEventListener('click', () => {
+        if (state === 'over' || state === 'ready') resetFight();
+      });
+
+      function showOverlay(kicker, title, copy, buttonText) {
+        ui.overlayKicker.textContent = kicker;
+        ui.overlayTitle.innerHTML = title;
+        ui.overlayCopy.textContent = copy;
+        ui.overlayButton.innerHTML = `${buttonText} <span class="arrow">↗</span>`;
+        ui.overlay.hidden = false;
+      }
+
+      function attemptAttack(actor, kind) {
+        if (state !== 'playing' || actor.hitstun > 0 || actor.attack || actor.dodge > 0 || actor.blocking) return;
+        const specs = {
+          jab: { label: 'PROSTY', damage: 8, range: 132, windup: .10, duration: .34, cooldown: .37, focus: 5 },
+          cross: { label: 'CROSS', damage: 13, range: 151, windup: .17, duration: .49, cooldown: .58, focus: 8 },
+          uraken: { label: 'URAKEN', damage: 22, range: 176, windup: .27, duration: .72, cooldown: .88, cost: 35, focus: 0 }
+        };
+        const spec = specs[kind];
+        if (actor.cooldown > 0) return;
+        if (kind === 'uraken' && actor.focus < spec.cost) {
+          setAnnouncement('BRAK ENERGII', .7);
+          return;
+        }
+        if (kind === 'uraken') actor.focus -= spec.cost;
+        actor.attack = { kind, ...spec, elapsed: 0, hit: false };
+        actor.cooldown = spec.cooldown;
+        actor.blocking = false;
+      }
+
+      function triggerDodge(actor) {
+        if (state !== 'playing' || actor.dodgeCooldown > 0 || actor.hitstun > 0 || actor.attack) return;
+        actor.dodge = .27;
+        actor.dodgeCooldown = 1.05;
+        actor.blocking = false;
+      }
+
+      function setAnnouncement(message, duration = .62) { announce = message; announceTimer = duration; }
+
+      function doHit(attacker, defender, attack) {
+        const gap = Math.abs(defender.x - attacker.x);
+        const direction = attacker.x < defender.x ? 1 : -1;
+        if (gap > attack.range || defender.dodge > 0) {
+          setAnnouncement(defender.dodge > 0 ? 'UNIK!' : 'PUDŁO', .55);
+          return;
+        }
+        const blocked = defender.blocking;
+        let damage = blocked ? Math.max(2, Math.round(attack.damage * (attack.kind === 'uraken' ? .42 : .22))) : attack.damage;
+        defender.hp = Math.max(0, defender.hp - damage);
+        attacker.focus = Math.min(100, attacker.focus + (blocked ? 3 : attack.focus));
+        defender.focus = Math.min(100, defender.focus + (blocked ? 5 : 2));
+        defender.hitstun = blocked ? .08 : .24;
+        defender.x = clamp(defender.x + direction * (blocked ? 6 : 15), 130, 830);
+        hitFlash = .16;
+        hitText = blocked ? 'BLOK' : `${attack.label}  −${damage}`;
+        hitTextTimer = .72;
+        setAnnouncement(blocked ? 'CZYSTA GARDA' : attack.kind === 'uraken' ? 'URAKEN!' : 'TRAFIENIE', .65);
+        updateUI();
+      }
+
+      function updateFighter(actor, target, dt) {
+        actor.cooldown = Math.max(0, actor.cooldown - dt);
+        actor.dodgeCooldown = Math.max(0, actor.dodgeCooldown - dt);
+        actor.dodge = Math.max(0, actor.dodge - dt);
+        actor.hitstun = Math.max(0, actor.hitstun - dt);
+        actor.facing = target.x >= actor.x ? 1 : -1;
+        if (actor.attack) {
+          actor.attack.elapsed += dt;
+          if (!actor.attack.hit && actor.attack.elapsed >= actor.attack.windup) {
+            actor.attack.hit = true;
+            doHit(actor, target, actor.attack);
+          }
+          if (actor.attack.elapsed >= actor.attack.duration) actor.attack = null;
+        }
+        actor.blocking = (isHeld(actor.id, 'block') || (actor.id === 2 && mode === 'solo' && aiGuard > 0)) && !actor.attack && actor.dodge <= 0 && actor.hitstun <= 0;
+        if (actor.dodge > 0) {
+          actor.x -= actor.facing * 410 * dt;
+          actor.move = -actor.facing;
+        } else if (actor.hitstun <= 0 && !actor.attack && !actor.blocking) {
+          const direction = actor.id === 2 && mode === 'solo' ? actor.aiMove : getMovement(actor.id);
+          actor.move = direction;
+          actor.x += direction * 220 * dt;
+        } else actor.move *= .6;
+        actor.x = clamp(actor.x, 130, 830);
+      }
+
+      function isHeld(player, action) {
+        if (touchHeld.has(`${player}:${action}`)) return true;
+        const codes = player === 1
+          ? { left: ['KeyA'], right: ['KeyD'], block: ['KeyS'] }
+          : { left: ['ArrowLeft'], right: ['ArrowRight'], block: ['ArrowDown'] };
+        return (codes[action] || []).some(code => keys.has(code));
+      }
+      function getMovement(player) { return (isHeld(player, 'right') ? 1 : 0) - (isHeld(player, 'left') ? 1 : 0); }
+
+      function updateAI(dt) {
+        if (mode !== 'solo' || state !== 'playing') return;
+        const distance = Math.abs(p2.x - p1.x);
+        aiThink -= dt; aiGuard = Math.max(0, aiGuard - dt); aiDodge = Math.max(0, aiDodge - dt);
+        p2.blocking = false;
+        p2.aiMove = 0;
+        if (p1.attack && distance < p1.attack.range + 22 && aiDodge <= 0 && p2.dodgeCooldown <= 0 && Math.random() < .17) {
+          triggerDodge(p2); aiDodge = .45; setAnnouncement('BOT UNIKA', .48);
+        } else if (p1.attack && distance < 162 && Math.random() < .3) {
+          p2.blocking = true; aiGuard = .16;
+        } else if (aiGuard <= 0 && !p2.attack && p2.dodge <= 0 && p2.hitstun <= 0) {
+          if (distance > 145) p2.aiMove = -1;
+          else if (distance < 100) p2.aiMove = 1;
+        }
+        if (aiThink <= 0 && !p2.attack && p2.hitstun <= 0 && p2.dodge <= 0) {
+          if (distance < 193) {
+            const roll = Math.random();
+            attemptAttack(p2, p2.focus >= 35 && roll > .79 ? 'uraken' : roll > .52 ? 'cross' : 'jab');
+          }
+          aiThink = .48 + Math.random() * .78;
+        }
+      }
+
+      function update(dt) {
+        elapsed += dt; ambience += dt;
+        hitFlash = Math.max(0, hitFlash - dt); hitTextTimer = Math.max(0, hitTextTimer - dt); announceTimer = Math.max(0, announceTimer - dt);
+        if (state === 'countdown') {
+          countdown -= dt; announceTimer = Math.max(0, countdown);
+          const tick = Math.ceil(countdown);
+          announce = countdown > .22 ? String(Math.max(1, tick)) : 'FIGHT!';
+          if (countdown <= 0) {
+            state = 'playing'; remaining = 99; announce = 'FIGHT!'; announceTimer = .7;
+            ui.statusPill.textContent = 'WALKA'; ui.status.textContent = 'Znajdź dystans. Broń się i wybierz moment na uraken.';
+          }
+        } else if (state === 'playing') {
+          updateAI(dt);
+          updateFighter(p1, p2, dt);
+          updateFighter(p2, p1, dt);
+          remaining = Math.max(0, remaining - dt);
+          if (p1.hp <= 0 || p2.hp <= 0 || remaining <= 0) finishFight();
+        }
+        updateUI();
+      }
+
+      function finishFight() {
+        if (state !== 'playing') return;
+        state = 'over';
+        winner = p1.hp === p2.hp ? 0 : p1.hp > p2.hp ? 1 : 2;
+        const headline = winner === 0 ? 'Remis.' : mode === 'solo' ? (winner === 1 ? 'Twoje zwycięstwo.' : 'Bot wygrywa.') : `Wygrywa ${winner === 1 ? 'Red' : 'Shift'}.`;
+        const kicker = p1.hp === 0 || p2.hp === 0 ? 'Koniec przez nokaut' : 'Koniec rundy';
+        showOverlay(kicker, headline, winner === 1 ? 'Dobra robota. Spokojny timing zrobił różnicę.' : winner === 2 ? 'Jeszcze jedna runda? Pamiętaj o gardzie i unikach.' : 'Wyrównana walka. Czas na rewanż.', 'Rewanż');
+        ui.statusPill.textContent = 'RUNDA ZAKOŃCZONA'; ui.status.textContent = headline;
+        ui.startButton.innerHTML = 'Zagraj ponownie <span class="arrow">↗</span>';
+      }
+
+      function updateUI() {
+        if (!p1 || !p2) return;
+        ui.leftHealth.style.width = `${p1.hp}%`; ui.rightHealth.style.width = `${p2.hp}%`;
+        ui.leftFocus.style.width = `${p1.focus}%`; ui.rightFocus.style.width = `${p2.focus}%`;
+        ui.clock.textContent = `${String(Math.floor(remaining / 60)).padStart(2, '0')}:${String(Math.floor(remaining % 60)).padStart(2, '0')}`;
+        ui.leftName.textContent = 'RED / GRACZ 1'; ui.rightName.textContent = mode === 'solo' ? 'BOT / SHIFT' : 'SHIFT / GRACZ 2';
+        if (state === 'over') ui.startButton.innerHTML = 'Zagraj ponownie <span class="arrow">↗</span>';
+        else if (state === 'playing' || state === 'countdown') ui.startButton.innerHTML = 'Walka trwa <span class="arrow">·</span>';
+        else ui.startButton.innerHTML = 'Rozpocznij walkę <span class="arrow">↗</span>';
+      }
+
+      function drawArena() {
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, '#27332c'); bg.addColorStop(.52, '#39463a'); bg.addColorStop(.53, '#222822'); bg.addColorStop(1, '#111512');
+        ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+        // Soft overhead lamps and gym rafters.
+        ctx.fillStyle = '#18211b'; ctx.fillRect(0, 0, W, 118);
+        ctx.strokeStyle = '#647061'; ctx.globalAlpha = .28; ctx.lineWidth = 2;
+        for (let x = -40; x < W + 100; x += 118) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + 160, 112); ctx.stroke(); }
+        ctx.globalAlpha = 1;
+        for (let i = 0; i < 5; i++) {
+          const x = 95 + i * 190;
+          const glow = ctx.createRadialGradient(x, 80, 0, x, 80, 160);
+          glow.addColorStop(0, '#e6efc726'); glow.addColorStop(1, '#e6efc700');
+          ctx.fillStyle = glow; ctx.fillRect(x - 160, 0, 320, 330);
+          ctx.fillStyle = '#e9ead6'; ctx.globalAlpha = .8; ctx.fillRect(x - 19, 18, 38, 4); ctx.globalAlpha = 1;
+        }
+        // Back wall panels.
+        ctx.fillStyle = '#263029'; ctx.fillRect(0, 111, W, 171);
+        ctx.fillStyle = '#303a31'; ctx.fillRect(0, 123, W, 5);
+        for (let i = 0; i < 13; i++) {
+          const x = i * 78 + 15;
+          ctx.fillStyle = i % 2 ? '#202822' : '#2a332b'; ctx.fillRect(x, 145, 42, 87);
+          ctx.fillStyle = '#465044'; ctx.fillRect(x + 8, 157, 26, 2);
+          ctx.fillStyle = '#596252'; ctx.globalAlpha = .46; ctx.fillRect(x + 13, 175, 16, 27); ctx.globalAlpha = 1;
+        }
+        // Ring deck in perspective.
+        ctx.beginPath(); ctx.moveTo(62, 258); ctx.lineTo(898, 258); ctx.lineTo(960, 484); ctx.lineTo(0, 484); ctx.closePath();
+        const mat = ctx.createLinearGradient(0, 258, 0, 484); mat.addColorStop(0, '#c1c5ac'); mat.addColorStop(1, '#6d7868'); ctx.fillStyle = mat; ctx.fill();
+        ctx.save(); ctx.beginPath(); ctx.moveTo(62, 258); ctx.lineTo(898, 258); ctx.lineTo(960, 484); ctx.lineTo(0, 484); ctx.closePath(); ctx.clip();
+        ctx.strokeStyle = '#eef0d4'; ctx.globalAlpha = .16; ctx.lineWidth = 1;
+        for (let x = -100; x < 1100; x += 48) { ctx.beginPath(); ctx.moveTo(480 + (x - 480) * .68, 258); ctx.lineTo(x, 484); ctx.stroke(); }
+        for (let y = 285; y < 510; y += 32) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+        ctx.restore();
+        // Ring ropes recede toward the corners.
+        const ropeYs = [264, 291, 318];
+        ropeYs.forEach((y, i) => {
+          ctx.beginPath(); ctx.moveTo(31 - i * 11, y); ctx.lineTo(929 + i * 11, y); ctx.strokeStyle = i === 1 ? '#e34f3f' : '#e8e7d8'; ctx.lineWidth = 5 - i * .55; ctx.shadowColor = '#0008'; ctx.shadowBlur = 4; ctx.stroke(); ctx.shadowBlur = 0;
+        });
+        ctx.fillStyle = '#1c211d'; ctx.fillRect(0, 475, W, 65);
+        ctx.fillStyle = '#d8f16b'; ctx.globalAlpha = .85; ctx.fillRect(0, 475, W, 3); ctx.globalAlpha = 1;
+        ctx.fillStyle = '#171d18'; ctx.fillRect(390, 126, 180, 72);
+        ctx.strokeStyle = '#687364'; ctx.lineWidth = 1; ctx.strokeRect(390, 126, 180, 72);
+        ctx.fillStyle = '#d8f16b'; ctx.textAlign = 'center'; ctx.font = '900 18px Impact, sans-serif'; ctx.fillText('RS: RED SHIFT', 480, 157);
+        ctx.fillStyle = '#c2c8bd'; ctx.font = '700 8px Arial, sans-serif'; ctx.fillText('TECHNIQUE · RESPECT · TIMING', 480, 176);
+        // Faint crowd silhouettes.
+        for (let i = 0; i < 23; i++) {
+          const x = (i * 47 + 19) % W; const y = 223 + Math.sin(i * 8.4) * 6;
+          ctx.fillStyle = i % 3 === 0 ? '#758170' : '#161d18'; ctx.globalAlpha = .75;
+          ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(x - 8, y + 7, 16, 24);
+        }
+        ctx.globalAlpha = 1;
+        // Arena grain and vignette.
+        const vignette = ctx.createRadialGradient(480, 245, 130, 480, 270, 610);
+        vignette.addColorStop(0, '#00000000'); vignette.addColorStop(1, '#070a08a8'); ctx.fillStyle = vignette; ctx.fillRect(0, 0, W, H);
+      }
+
+      function drawFighter(actor, target) {
+        const floorY = 421 + (actor.x - 480) * .025;
+        const scale = 1 + ((actor.x - 480) / 480) * .10;
+        const t = ambience * 6 + actor.wobble;
+        const facing = actor.facing;
+        const moveBob = actor.dodge > 0 ? -10 : Math.sin(t) * (actor.attack ? 1.5 : 3);
+        const attack = actor.attack;
+        let punch = 0;
+        if (attack) punch = Math.min(1, attack.elapsed / Math.max(.11, attack.windup));
+        const shadowWidth = 51 * scale;
+        ctx.save(); ctx.globalAlpha = .25; ctx.fillStyle = '#050806'; ctx.beginPath(); ctx.ellipse(actor.x, floorY + 4, shadowWidth, 12, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+        ctx.save(); ctx.translate(actor.x, floorY + moveBob); ctx.scale(facing * scale, scale);
+        if (actor.dodge > 0) ctx.rotate(-.09);
+        // Legs and footwork.
+        const step = actor.move ? Math.sin(t * 2) * 8 : 0;
+        ctx.strokeStyle = '#17201b'; ctx.lineWidth = 15; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(-10, -54); ctx.lineTo(-18 + step, -18); ctx.lineTo(-23 + step, -4); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(10, -54); ctx.lineTo(20 - step, -17); ctx.lineTo(25 - step, -4); ctx.stroke();
+        ctx.strokeStyle = '#d4d0bd'; ctx.lineWidth = 9;
+        ctx.beginPath(); ctx.moveTo(-22 + step, -7); ctx.lineTo(-7 + step, -5); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(24 - step, -7); ctx.lineTo(39 - step, -5); ctx.stroke();
+        // Shorts.
+        ctx.fillStyle = actor.color; ctx.beginPath(); ctx.moveTo(-24, -68); ctx.lineTo(24, -68); ctx.lineTo(27, -39); ctx.lineTo(4, -36); ctx.lineTo(0, -48); ctx.lineTo(-5, -36); ctx.lineTo(-27, -39); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = actor.accent; ctx.fillRect(-24, -68, 48, 5);
+        ctx.fillStyle = '#f1efdf'; ctx.font = '900 8px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(actor.id === 1 ? 'RED' : 'SHIFT', 0, -48);
+        // Torso.
+        ctx.fillStyle = actor.id === 1 ? '#d99875' : '#b9876a';
+        ctx.beginPath(); ctx.moveTo(-23, -132); ctx.quadraticCurveTo(0, -143, 23, -132); ctx.lineTo(26, -72); ctx.quadraticCurveTo(0, -62, -26, -72); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = actor.color; ctx.beginPath(); ctx.moveTo(-23, -133); ctx.lineTo(23, -133); ctx.lineTo(17, -104); ctx.lineTo(-17, -104); ctx.closePath(); ctx.fill();
+        // Neck and head.
+        ctx.fillStyle = '#c38d71'; ctx.fillRect(-7, -149, 14, 19);
+        ctx.fillStyle = actor.id === 1 ? '#dda486' : '#c79377'; ctx.beginPath(); ctx.ellipse(0, -161, 20, 23, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#211e1a'; ctx.beginPath(); ctx.ellipse(-1, -177, 20, 10, -.06, Math.PI, Math.PI * 2); ctx.fill();
+        ctx.fillRect(-20, -176, 9, 13);
+        ctx.fillStyle = '#2a2520'; ctx.fillRect(7, -163, 4, 3);
+        // Rear arm, then lead arm. Gloves are oversized for readability.
+        const guard = actor.blocking ? 1 : 0;
+        const rearShoulder = { x: -18, y: -124 };
+        ctx.strokeStyle = '#c98f73'; ctx.lineWidth = 14; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(rearShoulder.x, rearShoulder.y); ctx.lineTo(-31, -105); ctx.lineTo(-12, -132 + guard * 8); ctx.stroke();
+        drawGlove(-10, -133 + guard * 8, actor.color, actor.accent);
+        let frontX = 21, frontY = -123;
+        if (attack) {
+          if (attack.kind === 'jab') { frontX = 51 + punch * 39; frontY = -120; }
+          if (attack.kind === 'cross') { frontX = 49 + punch * 43; frontY = -130; }
+          if (attack.kind === 'uraken') { frontX = 42 + Math.sin(Math.min(1, punch) * Math.PI) * 40; frontY = -128 - Math.sin(Math.min(1, punch) * Math.PI) * 18; }
+        } else if (guard) { frontX = 15; frontY = -147; }
+        ctx.strokeStyle = '#d49a7d'; ctx.lineWidth = 15;
+        ctx.beginPath(); ctx.moveTo(17, -126); ctx.lineTo(frontX * .54, frontY + 2); ctx.lineTo(frontX, frontY); ctx.stroke();
+        if (attack && attack.kind === 'uraken' && attack.elapsed < attack.windup + .12) {
+          ctx.save(); ctx.globalAlpha = .38; ctx.strokeStyle = actor.accent; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(frontX, frontY, 26, -1.4, .3); ctx.stroke(); ctx.restore();
+        }
+        drawGlove(frontX, frontY, actor.color, actor.accent);
+        if (actor.dodge > 0) {
+          ctx.globalAlpha = .48; ctx.fillStyle = '#edf2dd'; ctx.beginPath(); ctx.ellipse(-4, -104, 28, 40, -.25, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+        }
+        ctx.restore();
+        // Floor nameplate.
+        ctx.save(); ctx.textAlign = 'center'; ctx.font = '800 9px Arial, sans-serif'; ctx.fillStyle = '#e4e8d7'; ctx.globalAlpha = .8; ctx.fillText(actor.name, actor.x, floorY + 24); ctx.restore();
+      }
+
+      function drawGlove(x, y, color, accent) {
+        ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(x, y, 13, 11, .18, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = accent; ctx.beginPath(); ctx.ellipse(x + 3, y - 1, 7, 5, .1, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#e9e2d1'; ctx.fillRect(x - 7, y + 7, 10, 4);
+      }
+      function drawFloatingText(text, x, y, color) {
+        ctx.save(); ctx.textAlign = 'center'; ctx.font = '900 17px Impact, sans-serif'; ctx.fillStyle = color; ctx.strokeStyle = '#101411'; ctx.lineWidth = 4; ctx.strokeText(text, x, y); ctx.fillText(text, x, y); ctx.restore();
+      }
+      function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+
+      window.addEventListener('keydown', event => {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(event.code)) event.preventDefault();
+        if (!keys.has(event.code)) {
+          if (event.code === 'Space' && (state === 'ready' || state === 'over')) { resetFight(); return; }
+          if (attackMap[event.code]) {
+            const [player, attack] = attackMap[event.code];
+            if (player === 1 || mode === 'local') attemptAttack(player === 1 ? p1 : p2, attack);
+          }
+          if (dodgeMap[event.code] && (dodgeMap[event.code] === 1 || mode === 'local')) triggerDodge(dodgeMap[event.code] === 1 ? p1 : p2);
+        }
+        keys.add(event.code);
+      });
+      window.addEventListener('keyup', event => keys.delete(event.code));
+      window.addEventListener('blur', () => { keys.clear(); touchHeld.clear(); document.querySelectorAll('.pad-btn').forEach(b => b.classList.remove('is-down')); });
+
+      document.querySelectorAll('.pad-btn[data-action]').forEach(button => {
+        const player = Number(button.dataset.player); const action = button.dataset.action; const key = `${player}:${action}`;
+        const down = event => {
+          event.preventDefault();
+          if (player === 2 && mode !== 'local') return;
+          button.classList.add('is-down');
+          if (action === 'jab' || action === 'cross' || action === 'uraken') attemptAttack(player === 1 ? p1 : p2, action);
+          else if (action === 'dodge') triggerDodge(player === 1 ? p1 : p2);
+          else touchHeld.add(key);
+        };
+        const up = event => { event.preventDefault(); button.classList.remove('is-down'); touchHeld.delete(key); };
+        button.addEventListener('pointerdown', down);
+        button.addEventListener('pointerup', up);
+        button.addEventListener('pointercancel', up);
+        button.addEventListener('lostpointercapture', up);
+      });
+
+      p1 = fighter(1, 305, '#d94f3e', '#f2b16c', 'RED');
+      p2 = fighter(2, 655, '#337c8d', '#d8efbd', 'SHIFT');
+      setMode('solo'); updateUI();
+      requestAnimationFrame(function loop(now) {
+        const dt = Math.min(.04, Math.max(0, (now - lastFrame) / 1000)); lastFrame = now;
+        update(dt);
+        const rect = canvas.getBoundingClientRect(); const dpr = Math.min(2, window.devicePixelRatio || 1);
+        const pixelWidth = Math.max(1, Math.round(rect.width * dpr)); const pixelHeight = Math.max(1, Math.round(rect.height * dpr));
+        if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) { canvas.width = pixelWidth; canvas.height = pixelHeight; }
+        ctx.setTransform(pixelWidth / W, 0, 0, pixelHeight / H, 0, 0);
+        drawArena(); drawFighter(p1, p2); drawFighter(p2, p1);
+        if (hitFlash > 0) { ctx.fillStyle = `rgba(242,245,217,${hitFlash * .45})`; ctx.fillRect(0, 0, W, H); }
+        if (hitTextTimer > 0) drawFloatingText(hitText, W / 2, 260 - (0.72 - hitTextTimer) * 34, '#f7f1dd');
+        if ((state === 'countdown' || state === 'playing') && announceTimer > 0) {
+          ctx.save(); ctx.textAlign = 'center'; ctx.font = '900 54px Impact, sans-serif'; ctx.fillStyle = announce === 'FIGHT!' ? '#d8f16b' : '#f2efe5'; ctx.shadowColor = '#000'; ctx.shadowBlur = 20; ctx.fillText(announce, W / 2, 168); ctx.restore();
+        }
+        requestAnimationFrame(loop);
+      });
+    })();
+  </script>
+</body>
+</html>
